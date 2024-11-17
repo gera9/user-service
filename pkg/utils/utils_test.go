@@ -15,7 +15,7 @@ func TestAdd(t *testing.T) {
 		{
 			name: "1 + 1 = 2",
 			args: args{a: 1, b: 1},
-			want: 3,
+			want: 2,
 		},
 	}
 	for _, tt := range tests {
