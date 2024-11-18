@@ -9,6 +9,7 @@ import (
 	httpUser "github.com/gera9/user-service/internal/users/delivery/http"
 	"github.com/gera9/user-service/internal/users/repository"
 	"github.com/gera9/user-service/internal/users/service"
+	"github.com/gera9/user-service/pkg/otel"
 	"github.com/gera9/user-service/pkg/postgres"
 	"github.com/go-chi/chi/v5"
 )
@@ -20,6 +21,16 @@ func main() {
 		log.Fatal(err)
 	}
 	defer dbConn.Close()
+
+	otelInstance, err := otel.NewOTel(ctx, "otel-collector:4318")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		if err := otelInstance.Shutdown(ctx); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	mm := &middleware.MiddlewareManager{}
 

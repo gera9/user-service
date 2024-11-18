@@ -11,6 +11,13 @@ import (
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+)
+
+var (
+	tracer = otel.Tracer("user-service")
 )
 
 type usersHandler struct {
@@ -60,6 +67,11 @@ func (h *usersHandler) Signup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *usersHandler) Login(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "Login", trace.WithAttributes(
+		attribute.String("layer", "http"),
+	))
+	defer span.End()
+
 	userPayload := models.UserPayload{}
 	err := render.Bind(r, &userPayload)
 	if err != nil {
@@ -67,7 +79,7 @@ func (h *usersHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.usersService.LoginByUsername(r.Context(), userPayload)
+	token, err := h.usersService.LoginByUsername(ctx, userPayload)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			render.Render(w, r, models.ErrNotFound(errors.New("invalid email")))

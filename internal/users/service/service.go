@@ -9,6 +9,13 @@ import (
 	"github.com/gera9/user-service/pkg/models"
 	"github.com/gera9/user-service/pkg/utils"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+)
+
+var (
+	tracer = otel.Tracer("user-service")
 )
 
 type usersService struct {
@@ -34,6 +41,11 @@ func (u *usersService) GetById(ctx context.Context, id uuid.UUID) (*models.User,
 }
 
 func (u *usersService) LoginByUsername(ctx context.Context, user models.UserPayload) (string, error) {
+	ctx, span := tracer.Start(ctx, "LoginByUsername", trace.WithAttributes(
+		attribute.String("layer", "service"),
+	))
+	defer span.End()
+
 	if user.Username == "" || user.Password == "" {
 		return "", errors.New("username and password are required")
 	}

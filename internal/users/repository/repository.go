@@ -8,6 +8,13 @@ import (
 	"github.com/gera9/user-service/pkg/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+)
+
+var (
+	tracer = otel.Tracer("user-service")
 )
 
 type usersRepository struct {
@@ -30,6 +37,11 @@ func (r *usersRepository) Register(ctx context.Context, user models.UserPayload)
 }
 
 func (r *usersRepository) GetByUsername(ctx context.Context, username string) (*models.User, error) {
+	ctx, span := tracer.Start(ctx, "GetByUsername", trace.WithAttributes(
+		attribute.String("layer", "repository"),
+	))
+	defer span.End()
+
 	var user models.User
 	query := `SELECT id, username, email, password, created_at FROM users WHERE username = $1`
 	err := r.conn.QueryRow(ctx, query, username).Scan(&user.Id, &user.Username, &user.Email, &user.Password, &user.CreatedAt)
