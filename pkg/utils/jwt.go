@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/gera9/user-service/config"
@@ -26,7 +27,7 @@ func CreateToken(cfg config.Config, user *models.User) (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "user-service",
 			Subject:   user.Id.String(),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(5 * time.Second)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
 		},
 	}
 
@@ -60,4 +61,28 @@ func ParseAndValidateToken(cfg config.Config, tokenString string) (*models.User,
 		Username: claims.Username,
 		Email:    claims.Email,
 	}, nil
+}
+
+// CreateTestingToken creates a token for testing purposes
+// with the given username and email and returns it as a string.
+// The token is signed with the word "secret".
+func CreateTestingToken(username, email string) string {
+	claims := CustomClaims{
+		Username: username,
+		Email:    email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "user-service",
+			Subject:   "8bb48920-bc63-4c84-9bac-6e60cfd06f27",
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenString, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return tokenString
 }
